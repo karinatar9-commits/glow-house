@@ -100,6 +100,8 @@ function render(){
   let h=`<div class="tabs">${[['today','תורים'],['hours','שעות עבודה'],['blocks','חסימות'],['svc','טיפולים'],['more','הגדרות']].map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-tab="${k}">${n}</button>`).join('')}</div>`;
   if(tab==='today'){
     if(window.__gOk!==undefined){h+=window.__gOk?'<div class="box ok">החיבור לגוגל הצליח ✓</div>':'<div class="box bad">החיבור לגוגל לא הושלם. נסי שוב.</div>';window.__gOk=undefined}
+    {const perm=('Notification' in window)?Notification.permission:'na', has=D.admin_push_count>0;
+     h+=`<div class="card"><h2>🔔 התראות לטלפון</h2>${has&&perm==='granted'?'<p class="h" style="margin:0">פעיל ✓ תקבלי התראה על כל תור חדש, ביטול ואישור הגעה.</p>':IOS&&!STANDALONE?'<p class="h" style="margin:0">באייפון התראות עובדות רק מהאפליקציה: קודם מתקינים (למטה), פותחים מהאייקון, ואז מפעילים כאן.</p>':`<p class="h">תורים חדשים, ביטולים ואישורי הגעה יקפצו לך בטלפון.</p><button class="btn full" id="apush">הפעלת התראות</button>`}</div>`;}
     if(!STANDALONE) h+=`<div class="card"><h2>📲 להתקין כאפליקציה בטלפון</h2>${installEvt?'<p class="h">אייקון של Glow ניהול יופיע במסך הבית.</p><button class="btn full" id="inst">התקנה</button>':IOS?'<p class="h" style="margin:0">בספארי: כפתור השיתוף <b>⬆︎</b> למטה ← <b>"הוספה למסך הבית"</b> ← "הוספה". חשוב לפתוח מהקישור שקיבלת, כדי שהאייקון יזכור את הכניסה.</p>':'<p class="h" style="margin:0">בכרום: תפריט שלוש הנקודות ← <b>"התקנת אפליקציה"</b> או "הוספה למסך הבית".</p>'}</div>`;
     h+=`<div class="card"><div class="row"><div class="g"><b>קביעת תורים אונליין</b><small>${live?'פתוח. לקוחות יכולות לקבוע תור מהקישור.':'סגור. הלקוחות רואות "ייפתח בקרוב".'}</small></div><label class="sw"><input type="checkbox" id="live" ${live?'checked':''} ${!c.ok||!c.write?'disabled':''}><i></i></label></div>`;
     if(!c.ok||!c.write) h+=`<div class="box ${c.ok?'warn':'bad'}"><b>${c.ok?'היומן מחובר לקריאה בלבד':'היומן עוד לא מחובר'}</b>, ולכן אי אפשר לפתוח את הקביעה.
@@ -110,14 +112,14 @@ function render(){
       <button class="btn sm ghost" id="recheck" style="margin-top:8px">בדיקה מחדש</button></div>`;
     else h+=`<div class="box ok">היומן מחובר ✓ ${c.own&&c.email?'(<span dir="ltr">'+esc(c.email)+'</span>) ':''}כל מה שתפוס ביומן שלך נחסם אוטומטית לקביעה, ותורים חדשים נכנסים אליו מיד.${c.own?' <button class="link" id="gdis" style="font-size:13px">ניתוק</button>':''}</div>`;
     h+=`<div class="row"><div class="g"><b>הקישור ללקוחות</b><small dir="ltr" style="text-align:right;word-break:break-all">${esc(D.page)}</small></div><button class="btn sm ghost" id="copy">העתקה</button><a class="btn sm ghost" href="${esc(D.page)}?preview=1" target="_blank">תצוגה מקדימה</a></div>
-    <div class="row"><div class="g"><b>התראות על תור חדש</b><small>${D.whatsapp_ready&&V.notify_phone?'בווצאפ':V.notify_email?'במייל ל-'+esc(V.notify_email)+' (ווצאפ עוד לא מחובר)':'לא מוגדר'}</small></div></div></div>`;
+    <div class="row"><div class="g"><b>התראות על תור חדש</b><small>${D.admin_push_count>0?'בהתראה לטלפון שלך':V.notify_email?'במייל ל-'+esc(V.notify_email)+' (עד שתפעילי התראות לטלפון)':'לא מוגדר'}</small></div></div></div>`;
     const up=D.bookings.filter(b=>new Date(b.ends_at)>new Date(Date.now()-3600e3));
     h+=`<div class="card"><h2>תורים שנקבעו אונליין</h2><p class="h">רק תורים שנקבעו דרך הקישור. את כל היומן רואים ביומן גוגל.</p>`;
     if(!up.length) h+=`<div class="muted">עוד אין תורים.</div>`;
     let last='';
     for(const b of up){ const d=new Date(b.starts_at).toLocaleDateString('sv-SE',{timeZone:'Asia/Jerusalem'}); if(d!==last){last=d;h+=`<div class="day">${d===todayStr()?'היום · ':''}יום ${DAYS[new Date(d+'T12:00:00Z').getUTCDay()]} ${fmtD(d)}</div>`}
       const tm=new Date(b.starts_at).toLocaleTimeString('he-IL',{timeZone:'Asia/Jerusalem',hour:'2-digit',minute:'2-digit'}), x=b.status!=='confirmed';
-      h+=`<div class="row"><div class="g ${x?'cx':''}"><b>${tm} · ${esc(b.name)}</b><small>${esc(b.service_name)} · ${b.duration_min} דק׳ · <a href="tel:${esc(b.phone)}" dir="ltr">${esc(b.phone)}</a>${b.deposit?` · מקדמה ${b.deposit.amount} ₪ ב${b.deposit.method==='bit'?'ביט':'פייבוקס'} ${b.deposit.status==='received'?'<span class="pill ok">התקבלה</span>':b.deposit.status==='missing'?'<span class="pill bad">לא התקבלה</span>':'<span class="pill warn">לבדוק</span>'}`:''}</small>${!x&&b.deposit&&b.deposit.status==='claimed'?`<span style="display:flex;gap:6px;margin-top:6px"><button class="btn sm ghost" data-dep="${b.id}" data-st="received">✓ המקדמה התקבלה</button><button class="btn sm ghost" data-dep="${b.id}" data-st="missing">✗ לא התקבלה</button></span>`:''}</div>${x?`<span class="pill bad">בוטל${b.cancelled_by==='client'?' ע״י הלקוחה':b.cancelled_by==='calendar'?' (נמחק מהיומן)':''}</span>`:`<button class="btn del" data-cancel="${b.id}">ביטול</button>`}</div>` }
+      h+=`<div class="row"><div class="g ${x?'cx':''}"><b>${tm} · ${esc(b.name)}</b><small>${esc(b.service_name)} · ${b.duration_min} דק׳ · <a href="tel:${esc(b.phone)}" dir="ltr">${esc(b.phone)}</a>${b.deposit?` · מקדמה ${b.deposit.amount} ₪ ב${b.deposit.method==='bit'?'ביט':'פייבוקס'} ${b.deposit.status==='received'?'<span class="pill ok">התקבלה</span>':b.deposit.status==='missing'?'<span class="pill bad">לא התקבלה</span>':'<span class="pill warn">לבדוק</span>'}`:''}</small>${!x?`<br><small>${b.attend_confirmed_at?'<span class="pill ok">אישרה הגעה</span>':'<span class="pill warn">לא אישרה עדיין</span>'} ${b.reminders&&b.reminders.r24&&b.reminders.r24!=='failed'?'· תזכורת יום לפני נשלחה':''}${b.reminders&&b.reminders.morning&&b.reminders.morning!=='failed'?' · תזכורת בוקר נשלחה':''}</small>`:''}${x&&b.deposit&&b.deposit.kept?' <span class="pill warn">ביטול מאוחר — המקדמה נשמרת</span>':''}${!x&&b.deposit&&b.deposit.status==='claimed'?`<span style="display:flex;gap:6px;margin-top:6px"><button class="btn sm ghost" data-dep="${b.id}" data-st="received">✓ המקדמה התקבלה</button><button class="btn sm ghost" data-dep="${b.id}" data-st="missing">✗ לא התקבלה</button></span>`:''}</div>${x?`<span class="pill bad">בוטל${b.cancelled_by==='client'?' ע״י הלקוחה':b.cancelled_by==='calendar'?' (נמחק מהיומן)':''}</span>`:`<button class="btn del" data-cancel="${b.id}">ביטול</button>`}</div>` }
     h+=`</div>`;
   }
   if(tab==='hours'){
@@ -150,6 +152,10 @@ function render(){
     <label class="f">מספר לביט (אם אין קישור)</label><input type="tel" class="w" dir="ltr" data-v="bit_phone" value="${esc(V.bit_phone||'')}" placeholder="0501234567">
     <label class="f">קישור תשלום בפייבוקס (לא חובה)</label><input type="url" class="w" dir="ltr" data-v="paybox_url" value="${esc(V.paybox_url||'')}" placeholder="https://payboxapp.page.link/...">
     <p class="h" style="margin-top:8px">אפשר לקבוע מקדמה אחרת לטיפול מסוים בלשונית "טיפולים".</p></div>
+    <div class="card"><h2>תזכורות ללקוחות</h2><p class="h">נשלחות כהתראה לטלפון של הלקוחה (אם אישרה התראות כשקבעה), עם כפתור לאישור הגעה.</p>
+    <div class="row"><div class="g"><b>יום לפני התור</b><small>כולל בקשה לאשר הגעה</small></div><label class="sw"><input type="checkbox" data-v="remind_24" ${V.remind_24!==false?'checked':''}><i></i></label></div>
+    <div class="row"><div class="g"><b>בבוקר של התור</b></div><label class="sw"><input type="checkbox" data-v="remind_morning" ${V.remind_morning!==false?'checked':''}><i></i></label></div>
+    ${num('morning_hour','שעת תזכורת הבוקר','',5,12)}</div>
     `+`<div class="card"><h2>כללי קביעה</h2>
     <div class="row"><div class="g"><b>שעות התחלה כל</b></div><span><select data-v="step_min">${[10,15,20,30,60].map(n=>`<option ${V.step_min===n?'selected':''}>${n}</option>`).join('')}</select> דק׳</span></div>
     ${num('buffer_min','הפסקה בין תורים','דק׳',0,60)}${num('lead_min','התראה מינימלית לפני תור','דק׳',0,10080)}${num('horizon_days','כמה ימים קדימה אפשר לקבוע','ימים',1,90)}${num('cancel_hours','ביטול אונליין עד','שעות לפני',0,168)}${num('max_per_phone','מקסימום תורים עתידיים ללקוחה','',1,10)}</div>
@@ -171,6 +177,12 @@ function bind(){
   const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f};
   const live=$('#live'); if(live) live.onchange=async()=>{V.live=live.checked;await save()};
   on('recheck',()=>load(true));
+  on('apush',async()=>{const b=$('#apush');b.disabled=true;b.textContent='רגע…';
+    try{if(!('PushManager' in window))throw 0;if(await Notification.requestPermission()!=='granted'){alertBox('ההתראות לא אושרו. אפשר לאשר בהגדרות ולנסות שוב.');b.disabled=false;b.textContent='הפעלת התראות';return}
+      const reg=await navigator.serviceWorker.ready;const u=s=>{const q='='.repeat((4-s.length%4)%4);const r=atob((s+q).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))};
+      const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u(D.vapid)});
+      await call({mode:'admin_push',sub:sub.toJSON()});await load(true)}
+    catch(e){alertBox('לא הצלחתי להפעיל התראות במכשיר הזה.');b.disabled=false;b.textContent='הפעלת התראות'}});
   on('gconn',async()=>{const b=$('#gconn');b.disabled=true;b.textContent='פותח את גוגל…';try{const j=await call({mode:'admin_google_url'});location.href=j.url}catch(e){b.disabled=false;b.textContent='📅 חיבור היומן עם Google';alertBox('לא הצלחתי לפתוח את גוגל. נסי שוב.')}});
   on('gdis',async()=>{const b=$('#gdis');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='בטוחה? לחצי שוב';return}try{await call({mode:'admin_google_disconnect'});await load(true)}catch(e){alertBox('הניתוק נכשל')}});
   on('inst',async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;render()});
