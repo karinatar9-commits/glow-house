@@ -1,0 +1,17 @@
+{
+  "name": "Glow House · ניהול תורים",
+  "short_name": "Glow ניהול",
+  "lang": "he",
+  "dir": "rtl",
+  "id": "/admin.html",
+  "start_url": "/admin.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7efe6",
+  "theme_color": "#f7efe6",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
