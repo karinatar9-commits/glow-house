@@ -117,7 +117,7 @@ function render(){
     let last='';
     for(const b of up){ const d=new Date(b.starts_at).toLocaleDateString('sv-SE',{timeZone:'Asia/Jerusalem'}); if(d!==last){last=d;h+=`<div class="day">${d===todayStr()?'היום · ':''}יום ${DAYS[new Date(d+'T12:00:00Z').getUTCDay()]} ${fmtD(d)}</div>`}
       const tm=new Date(b.starts_at).toLocaleTimeString('he-IL',{timeZone:'Asia/Jerusalem',hour:'2-digit',minute:'2-digit'}), x=b.status!=='confirmed';
-      h+=`<div class="row"><div class="g ${x?'cx':''}"><b>${tm} · ${esc(b.name)}</b><small>${esc(b.service_name)} · ${b.duration_min} דק׳ · <a href="tel:${esc(b.phone)}" dir="ltr">${esc(b.phone)}</a></small></div>${x?`<span class="pill bad">בוטל${b.cancelled_by==='client'?' ע״י הלקוחה':b.cancelled_by==='calendar'?' (נמחק מהיומן)':''}</span>`:`<button class="btn del" data-cancel="${b.id}">ביטול</button>`}</div>` }
+      h+=`<div class="row"><div class="g ${x?'cx':''}"><b>${tm} · ${esc(b.name)}</b><small>${esc(b.service_name)} · ${b.duration_min} דק׳ · <a href="tel:${esc(b.phone)}" dir="ltr">${esc(b.phone)}</a>${b.deposit?` · מקדמה ${b.deposit.amount} ₪ ב${b.deposit.method==='bit'?'ביט':'פייבוקס'} ${b.deposit.status==='received'?'<span class="pill ok">התקבלה</span>':b.deposit.status==='missing'?'<span class="pill bad">לא התקבלה</span>':'<span class="pill warn">לבדוק</span>'}`:''}</small>${!x&&b.deposit&&b.deposit.status==='claimed'?`<span style="display:flex;gap:6px;margin-top:6px"><button class="btn sm ghost" data-dep="${b.id}" data-st="received">✓ המקדמה התקבלה</button><button class="btn sm ghost" data-dep="${b.id}" data-st="missing">✗ לא התקבלה</button></span>`:''}</div>${x?`<span class="pill bad">בוטל${b.cancelled_by==='client'?' ע״י הלקוחה':b.cancelled_by==='calendar'?' (נמחק מהיומן)':''}</span>`:`<button class="btn del" data-cancel="${b.id}">ביטול</button>`}</div>` }
     h+=`</div>`;
   }
   if(tab==='hours'){
@@ -136,13 +136,19 @@ function render(){
     <div class="card"><h2>חסימות קרובות</h2>${list.map(b=>`<div class="row"><div class="g"><b>${fmtD(b.from_date)}${b.to_date!==b.from_date?' – '+fmtD(b.to_date):''} · ${b.all_day?'כל היום':b.from+'–'+b.to}</b><small>${esc(b.note)}</small></div><button class="btn del" data-delb="${b.id}">מחיקה</button></div>`).join('')||'<div class="muted">אין חסימות.</div>'}</div>`;
   }
   if(tab==='svc'){
-    h+=`<div class="card"><h2>טיפולים</h2><p class="h">משך הטיפול קובע כמה זמן נחסם ביומן. טיפול כבוי לא מוצג ללקוחות.</p>${V.services.map((s,i)=>`<div class="row"><label class="sw"><input type="checkbox" data-s="${i}" data-k="on" ${s.on?'checked':''}><i></i></label><div class="g"><input type="text" class="w" data-s="${i}" data-k="name" value="${esc(s.name)}" maxlength="60" aria-label="שם הטיפול"><small>${esc(s.cat)}</small></div><span><input type="number" data-s="${i}" data-k="min" value="${s.min}" min="5" max="600" step="5" aria-label="דקות"> דק׳</span><span><input type="number" data-s="${i}" data-k="price" value="${s.price??''}" min="0" aria-label="מחיר"> ₪</span></div>`).join('')}
+    h+=`<div class="card"><h2>טיפולים</h2><p class="h">משך הטיפול קובע כמה זמן נחסם ביומן. טיפול כבוי לא מוצג ללקוחות.</p>${V.services.map((s,i)=>`<div class="row"><label class="sw"><input type="checkbox" data-s="${i}" data-k="on" ${s.on?'checked':''}><i></i></label><div class="g"><input type="text" class="w" data-s="${i}" data-k="name" value="${esc(s.name)}" maxlength="60" aria-label="שם הטיפול"><small>${esc(s.cat)}</small></div><span><input type="number" data-s="${i}" data-k="min" value="${s.min}" min="5" max="600" step="5" aria-label="דקות"> דק׳</span><span><input type="number" data-s="${i}" data-k="price" value="${s.price??''}" min="0" aria-label="מחיר"> ₪</span>${V.deposit_on?`<span style="font-size:13px">מקדמה <input type="number" data-s="${i}" data-k="deposit" value="${s.deposit??''}" min="0" placeholder="${V.deposit_amount||0}" aria-label="מקדמה לטיפול"> ₪</span>`:''}</div>`).join('')}
     <div class="row"><div class="g"><b>להציג מחירים ללקוחות</b></div><label class="sw"><input type="checkbox" data-v="show_prices" ${V.show_prices?'checked':''}><i></i></label></div>
     <button class="btn ghost full" id="s_add" style="margin-top:10px">+ טיפול חדש</button></div>`;
   }
   if(tab==='more'){
     const num=(k,l,sfx,min,max)=>`<div class="row"><div class="g"><b>${l}</b></div><span><input type="number" data-v="${k}" value="${V[k]}" min="${min}" max="${max}"> ${sfx}</span></div>`;
-    h+=`<div class="card"><h2>כללי קביעה</h2>
+    h+=`<div class="card"><h2>מקדמה לפני קביעת תור</h2><p class="h">הלקוחה מעבירה מקדמה בביט או בפייבוקס ומסמנת "העברתי", ורק אז התור נקבע. אצלך התור מסומן "לבדוק" עד שתאשרי שהכסף נכנס.</p>
+    <div class="row"><div class="g"><b>לבקש מקדמה</b></div><label class="sw"><input type="checkbox" data-v="deposit_on" ${V.deposit_on?'checked':''}><i></i></label></div>
+    ${num('deposit_amount','סכום המקדמה (לכל טיפול)','₪',0,5000)}
+    <label class="f">מספר לביט</label><input type="tel" class="w" dir="ltr" data-v="bit_phone" value="${esc(V.bit_phone||'')}" placeholder="0501234567">
+    <label class="f">קישור תשלום בפייבוקס (לא חובה)</label><input type="url" class="w" dir="ltr" data-v="paybox_url" value="${esc(V.paybox_url||'')}" placeholder="https://payboxapp.page.link/...">
+    <p class="h" style="margin-top:8px">אפשר לקבוע מקדמה אחרת לטיפול מסוים בלשונית "טיפולים".</p></div>
+    `+`<div class="card"><h2>כללי קביעה</h2>
     <div class="row"><div class="g"><b>שעות התחלה כל</b></div><span><select data-v="step_min">${[10,15,20,30,60].map(n=>`<option ${V.step_min===n?'selected':''}>${n}</option>`).join('')}</select> דק׳</span></div>
     ${num('buffer_min','הפסקה בין תורים','דק׳',0,60)}${num('lead_min','התראה מינימלית לפני תור','דק׳',0,10080)}${num('horizon_days','כמה ימים קדימה אפשר לקבוע','ימים',1,90)}${num('cancel_hours','ביטול אונליין עד','שעות לפני',0,168)}${num('max_per_phone','מקסימום תורים עתידיים ללקוחה','',1,10)}</div>
     <div class="card"><h2>פרטי העסק</h2><label class="f">שם שמוצג ללקוחות</label><input type="text" class="w" data-v="business" value="${esc(V.business)}" maxlength="80"><label class="f">כתובת</label><input type="text" class="w" data-v="address" value="${esc(V.address)}" maxlength="120">
@@ -158,6 +164,7 @@ function bind(){
   app.querySelectorAll('[data-v]').forEach(i=>i.onchange=()=>{const k=i.dataset.v;V[k]=i.type==='checkbox'?i.checked:(i.type==='number'||i.tagName==='SELECT')?+i.value:i.value;mark()});
   app.querySelectorAll('[data-delb]').forEach(b=>b.onclick=()=>{V.blocks=V.blocks.filter(x=>x.id!==b.dataset.delb);mark();render()});
   app.querySelectorAll('[data-delw]').forEach(b=>b.onclick=()=>{V.weekly=V.weekly.filter(x=>x.id!==b.dataset.delw);mark();render()});
+  app.querySelectorAll('[data-dep]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await call({mode:'admin_deposit',id:b.dataset.dep,status:b.dataset.st});await load(true)}catch(e){alertBox('העדכון נכשל. נסי שוב.')}});
   app.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=async()=>{if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='בטוחה? לחצי שוב';return}b.disabled=true;try{await call({mode:'admin_cancel',id:b.dataset.cancel});await load(true)}catch(e){alertBox('הביטול נכשל. נסי שוב.')}});
   const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f};
   const live=$('#live'); if(live) live.onchange=async()=>{V.live=live.checked;await save()};

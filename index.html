@@ -49,7 +49,7 @@ h1{font-size:22px;font-weight:800;margin:0 0 4px}
 label{display:block;font-size:14px;font-weight:700;margin:16px 2px 6px}
 input[type=text],input[type=tel]{width:100%;font:inherit;font-size:17px;padding:14px 16px;border:1.5px solid var(--ln);border-radius:14px;background:#fff;color:var(--ink)}
 input:focus{outline:none;border-color:var(--ac)}
-.hp{position:absolute;left:-9999px;opacity:0;height:0;width:0}
+input.hp{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);opacity:0;pointer-events:none;border:0;padding:0}
 .sum{background:var(--card);border:1.5px solid var(--ln);border-radius:var(--r);padding:16px;margin-bottom:6px}
 .sum div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:15px}
 .sum div span{color:var(--mu)}
@@ -69,6 +69,17 @@ input:focus{outline:none;border-color:var(--ac)}
 .done{width:76px;height:76px;border-radius:50%;background:var(--ok);color:#fff;font-size:40px;display:flex;align-items:center;justify-content:center;margin:8px auto 16px}
 .done.x{background:var(--mu)}
 .note{font-size:13px;color:var(--mu);text-align:center;margin:14px 6px}
+.dep{background:var(--card);border:1.5px solid var(--gold);border-radius:var(--r);padding:16px;margin:16px 0 4px}
+.dep h2{font-size:17px;margin:0 0 4px}
+.dep p{margin:0 0 12px;font-size:14px;color:var(--mu)}
+.paybtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.paybtn{font:inherit;font-weight:700;border:1.5px solid var(--ln);background:#fff;color:var(--ink);border-radius:14px;padding:12px 8px;cursor:pointer;text-align:center;text-decoration:none;display:block}
+.paybtn.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.paybtn small{display:block;font-weight:500;font-size:12px;opacity:.8;margin-top:2px}
+.bitnum{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--soft);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:15px}
+.bitnum b{font-size:18px;letter-spacing:.5px}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:15px;font-weight:600;margin:4px 0 0;cursor:pointer}
+.chk input{width:22px;height:22px;flex:none;margin:0;accent-color:var(--ac)}
 .preview{background:#2e2218;color:#fff;text-align:center;font-size:13px;padding:8px}
 @media (max-width:360px){.times{grid-template-columns:repeat(3,1fr)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -89,7 +100,7 @@ let ADMIN='';try{ADMIN=PREVIEW?(localStorage.getItem('glow_admin')||''):''}catch
 const $=s=>document.querySelector(s), app=$('#app'), bar=$('#bar'), barin=$('#barin');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const DAYS=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'], MON=['ינו׳','פבר׳','מרץ','אפר׳','מאי','יוני','יולי','אוג׳','ספט׳','אוק׳','נוב׳','דצמ׳'];
-const ERR={taken:'השעה הזאת נתפסה בינתיים. בחרי שעה אחרת.',name:'צריך שם מלא (אותיות בלבד).',phone:'מספר הטלפון לא תקין. צריך מספר נייד ישראלי, למשל 050-1234567.',too_many:'כבר יש לך כמה תורים עתידיים. לשינוי, דברי עם רינת.',rate:'יותר מדי ניסיונות. נסי שוב בעוד כמה דקות.',calendar:'אי אפשר לבדוק את היומן כרגע. נסי שוב בעוד רגע.',closed:'קביעת התורים אונליין סגורה כרגע.',late:'כבר אי אפשר לבטל אונליין כל כך קרוב לתור. דברי עם רינת.',already:'התור הזה כבר בוטל.',not_found:'לא מצאנו את התור הזה.'};
+const ERR={deposit:'כדי לקבוע את התור צריך להעביר את המקדמה ולסמן שהעברת.',taken:'השעה הזאת נתפסה בינתיים. בחרי שעה אחרת.',name:'צריך שם מלא (אותיות בלבד).',phone:'מספר הטלפון לא תקין. צריך מספר נייד ישראלי, למשל 050-1234567.',too_many:'כבר יש לך כמה תורים עתידיים. לשינוי, דברי עם רינת.',rate:'יותר מדי ניסיונות. נסי שוב בעוד כמה דקות.',calendar:'אי אפשר לבדוק את היומן כרגע. נסי שוב בעוד רגע.',closed:'קביעת התורים אונליין סגורה כרגע.',late:'כבר אי אפשר לבטל אונליין כל כך קרוב לתור. דברי עם רינת.',already:'התור הזה כבר בוטל.',not_found:'לא מצאנו את התור הזה.'};
 const msg=e=>ERR[e]||'משהו השתבש. נסי שוב.';
 async function call(body){
   const h={'Content-Type':'application/json',apikey:KEY}; if(ADMIN){h['x-admin-token']=ADMIN; body.preview=true}
@@ -117,7 +128,7 @@ function viewServices(){
   scrollTo(0,0);
 }
 async function pick(id){
-  st.svc=st.cfg.services.find(s=>s.id===id); st.err='';
+  st.svc=st.cfg.services.find(s=>s.id===id); st.err=''; st.depPaid=false; st.depMethod='';
   app.innerHTML=steps(2)+`<div class="center"><div class="spin"></div>בודקת שעות פנויות…</div>`; setBar('');
   try{ const j=await call({mode:'slots',service:id}); st.days=j.days||[]; if(!st.days.some(d=>d.date===st.date)){st.date=st.days[0]?.date||'';st.time=''} viewSlots(); }
   catch(e){ app.innerHTML=steps(2)+`<div class="err">${msg(e.message)}</div><button class="btn ghost" id="rt">לנסות שוב</button><button class="btn ghost" id="bk">חזרה לטיפולים</button>`; $('#rt').onclick=()=>pick(id); $('#bk').onclick=viewServices; }
@@ -139,6 +150,23 @@ function viewSlots(){
   $('#nx').onclick=()=>st.time&&viewDetails();
 }
 const whenTxt=()=>{const p=dParts(st.date);return `יום ${DAYS[p.wd]} ${p.d}.${p.m} · ${st.time}`};
+const pay=()=>(st.cfg&&st.cfg.pay)||{};
+const fmtPhone=p=>p?p.slice(0,3)+'-'+p.slice(3):'';
+function depHtml(){
+  const amt=st.svc.deposit||0, P=pay(); if(!amt) return '';
+  if(!st.depMethod) st.depMethod=P.bit?'bit':'paybox';
+  return `<div class="dep" id="dep"><h2>מקדמה לשריון התור: ${amt} ₪</h2><p>משלמים מקדמה, ואז קובעים. המקדמה מקוזזת מהמחיר ביום הטיפול.</p>
+  ${P.bit&&P.paybox?`<div class="paybtns"><button type="button" class="paybtn ${st.depMethod==='bit'?'on':''}" data-pm="bit">ביט</button><button type="button" class="paybtn ${st.depMethod==='paybox'?'on':''}" data-pm="paybox">פייבוקס</button></div>`:''}
+  ${st.depMethod==='bit'&&P.bit?`<div class="bitnum"><span>מעבירים בביט ${amt} ₪ למספר<br><b dir="ltr">${fmtPhone(P.bit)}</b></span><button type="button" class="btn ghost" id="cpbit" style="width:auto;padding:10px 14px;font-size:15px">העתקה</button></div>`:''}
+  ${st.depMethod==='paybox'&&P.paybox?`<a class="btn" href="${esc(P.paybox)}" target="_blank" rel="noopener" style="margin-bottom:12px">תשלום ${amt} ₪ בפייבוקס</a>`:''}
+  <label class="chk"><input type="checkbox" id="depok" ${st.depPaid?'checked':''}> העברתי מקדמה של ${amt} ₪ ${st.depMethod==='bit'?'בביט':'בפייבוקס'}</label></div>`;
+}
+function bindDep(){
+  const keep=()=>{const n=$('#nm'),p=$('#ph');if(n)st.name=n.value;if(p)st.phone=p.value};
+  app.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{keep();st.depMethod=b.dataset.pm;st.depPaid=false;viewDetails()});
+  const c=$('#cpbit'); if(c) c.onclick=async()=>{try{await navigator.clipboard.writeText(pay().bit);c.textContent='הועתק ✓'}catch(e){prompt('המספר להעברה בביט:',pay().bit)}};
+  const k=$('#depok'); if(k) k.onchange=()=>{st.depPaid=k.checked};
+}
 function viewDetails(){
   const s=st.svc;
   app.innerHTML=steps(3)+`<h1>רק עוד פרט קטן</h1><p class="sub">כדי שרינת תדע מי מגיעה.</p>
@@ -148,8 +176,10 @@ function viewDetails(){
   <form id="f" novalidate><label for="nm">שם מלא</label><input id="nm" type="text" autocomplete="name" maxlength="40" value="${esc(st.name)}" required>
   <label for="ph">טלפון נייד</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="050-1234567" dir="ltr" style="text-align:right" value="${esc(st.phone)}" required>
   <input class="hp" type="text" id="ws" tabindex="-1" autocomplete="off" aria-hidden="true"></form>
+  ${depHtml()}
   <p class="note">הפרטים נשמרים רק לצורך התור ונמסרים לרינת בלבד.</p>`;
   $('#bk').onclick=()=>{st.err='';viewSlots()};
+  bindDep();
   setBar(`<button class="btn" id="go">${st.busy?'קובעת…':'לקבוע את התור'}</button>`);
   $('#go').disabled=st.busy; $('#go').onclick=submit; $('#f').onsubmit=e=>{e.preventDefault();submit()};
 }
@@ -159,9 +189,10 @@ async function submit(){
   const d=st.phone.replace(/\D/g,'').replace(/^972/,'0');
   if(st.name.replace(/[^\p{L}]/gu,'').length<2){st.err=ERR.name;return viewDetails()}
   if(!/^05\d{8}$/.test(d)){st.err=ERR.phone;return viewDetails()}
+  if((st.svc.deposit||0)>0&&!st.depPaid){st.err=ERR.deposit;return viewDetails()}
   st.busy=true; st.err=''; viewDetails();
   try{
-    const j=await call({mode:'book',service:st.svc.id,start:`${st.date}T${st.time}`,name:st.name,phone:d,website:$('#ws').value});
+    const j=await call({mode:'book',service:st.svc.id,start:`${st.date}T${st.time}`,name:st.name,phone:d,website:$('#ws').value,deposit_paid:!!st.depPaid,deposit_method:st.depMethod||''});
     try{localStorage.setItem('glow_name',st.name);localStorage.setItem('glow_phone',st.phone)}catch(e){}
     st.busy=false; viewDone(j.booking);
   }catch(e){
@@ -184,7 +215,7 @@ function viewDone(b){
   <a class="btn" href="${l.g}" target="_blank" rel="noopener">הוספה ליומן גוגל</a>
   <a class="btn ghost" href="${l.ics}" download="glow-house.ics">הוספה ליומן באייפון</a>
   <button class="btn ghost" id="cp">העתקת קישור לביטול התור</button>
-  <p class="note">${b.wa_sent?'שלחנו לך אישור בווצאפ. ':''}אפשר לבטל אונליין עד ${st.cfg.cancel_hours} שעות לפני התור, דרך הקישור. כדאי לשמור אותו.</p>
+  ${b.deposit?`<p class="note">רינת תאשר שהמקדמה של ${b.deposit.amount} ₪ התקבלה.</p>`:''}<p class="note">${b.wa_sent?'שלחנו לך אישור בווצאפ. ':''}אפשר לבטל אונליין עד ${st.cfg.cancel_hours} שעות לפני התור, דרך הקישור. כדאי לשמור אותו.</p>
   <button class="link" id="again" style="display:block;margin:0 auto">קביעת תור נוסף</button>`;
   $('#cp').onclick=async()=>{try{await navigator.clipboard.writeText(manage);$('#cp').textContent='הקישור הועתק ✓'}catch(e){prompt('העתיקי את הקישור:',manage)}};
   $('#again').onclick=viewServices; scrollTo(0,0);
