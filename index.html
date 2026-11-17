@@ -176,7 +176,7 @@ function viewSlots(){
 const whenTxt=()=>{const p=dParts(st.date);return `יום ${DAYS[p.wd]} ${p.d}.${p.m} · ${st.time}`};
 const pay=()=>(st.cfg&&st.cfg.pay)||{};
 const ANDROID=/android/i.test(navigator.userAgent);
-const bitHref=()=>ANDROID?'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.bnhp.payments.paymentsapp;S.browser_fallback_url='+encodeURIComponent('https://play.google.com/store/apps/details?id=com.bnhp.payments.paymentsapp')+';end':'https://apps.apple.com/il/app/bit/id1182007739';
+const bitHref=()=>ANDROID?'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.bnhp.payments.paymentsapp;S.browser_fallback_url='+encodeURIComponent('https://play.google.com/store/apps/details?id=com.bnhp.payments.paymentsapp')+';end':'https://www.bitpay.co.il/app/';
 const fmtPhone=p=>p?p.slice(0,3)+'-'+p.slice(3):'';
 function depHtml(){
   const amt=st.svc.deposit||0, P=pay(); if(!amt) return '';
