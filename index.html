@@ -80,6 +80,13 @@ input.hp{position:absolute!important;width:1px!important;height:1px!important;ov
 .bitnum b{font-size:18px;letter-spacing:.5px}
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:15px;font-weight:600;margin:4px 0 0;cursor:pointer}
 .chk input{width:22px;height:22px;flex:none;margin:0;accent-color:var(--ac)}
+.modal{position:fixed;inset:0;background:rgba(46,34,24,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.modal .sheet{background:var(--card);width:100%;max-width:560px;max-height:86dvh;border-radius:22px 22px 0 0;display:flex;flex-direction:column}
+.modal .body{overflow:auto;padding:20px 20px 8px;font-size:15px;line-height:1.7}
+.modal .body h3{font-size:16px;margin:16px 0 4px}
+.modal .body h2{font-size:19px;margin:0 0 8px;font-family:"Frank Ruhl Libre",serif;color:var(--ac-d)}
+.modal .foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--ln)}
+.tlink{color:var(--ac-d);font-weight:700;text-decoration:underline;cursor:pointer;background:none;border:0;font:inherit;padding:0}
 .preview{background:#2e2218;color:#fff;text-align:center;font-size:13px;padding:8px}
 @media (max-width:360px){.times{grid-template-columns:repeat(3,1fr)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -124,7 +131,7 @@ async function remindMe(token,btn,note){
 const $=s=>document.querySelector(s), app=$('#app'), bar=$('#bar'), barin=$('#barin');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const DAYS=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'], MON=['ינו׳','פבר׳','מרץ','אפר׳','מאי','יוני','יולי','אוג׳','ספט׳','אוק׳','נוב׳','דצמ׳'];
-const ERR={deposit:'כדי לקבוע את התור צריך להעביר את המקדמה ולסמן שהעברת.',taken:'השעה הזאת נתפסה בינתיים. בחרי שעה אחרת.',name:'צריך שם מלא (אותיות בלבד).',phone:'מספר הטלפון לא תקין. צריך מספר נייד ישראלי, למשל 050-1234567.',too_many:'כבר יש לך כמה תורים עתידיים. לשינוי, דברי עם רינת.',rate:'יותר מדי ניסיונות. נסי שוב בעוד כמה דקות.',calendar:'אי אפשר לבדוק את היומן כרגע. נסי שוב בעוד רגע.',closed:'קביעת התורים אונליין סגורה כרגע.',late:'אי אפשר לבטל: זמן הביטול עבר (פחות משעות הביטול לפני התור), והמקדמה לא מוחזרת. לשינוי, דברי עם רינת.',already:'התור הזה כבר בוטל.',not_found:'לא מצאנו את התור הזה.'};
+const ERR={terms:'כדי לקבוע את התור צריך לאשר את התקנון.',deposit:'כדי לקבוע את התור צריך להעביר את המקדמה ולסמן שהעברת.',taken:'השעה הזאת נתפסה בינתיים. בחרי שעה אחרת.',name:'צריך שם מלא (אותיות בלבד).',phone:'מספר הטלפון לא תקין. צריך מספר נייד ישראלי, למשל 050-1234567.',too_many:'כבר יש לך כמה תורים עתידיים. לשינוי, דברי עם רינת.',rate:'יותר מדי ניסיונות. נסי שוב בעוד כמה דקות.',calendar:'אי אפשר לבדוק את היומן כרגע. נסי שוב בעוד רגע.',closed:'קביעת התורים אונליין סגורה כרגע.',late:'אי אפשר לבטל: זמן הביטול עבר (פחות משעות הביטול לפני התור), והמקדמה לא מוחזרת. לשינוי, דברי עם רינת.',already:'התור הזה כבר בוטל.',not_found:'לא מצאנו את התור הזה.'};
 const msg=e=>ERR[e]||'משהו השתבש. נסי שוב.';
 async function call(body){
   const h={'Content-Type':'application/json',apikey:KEY}; if(ADMIN){h['x-admin-token']=ADMIN; body.preview=true}
@@ -148,6 +155,7 @@ function viewServices(){
   const cats=[]; for(const s of st.cfg.services){ let c=cats.find(x=>x.n===s.cat); if(!c){c={n:s.cat,l:[]};cats.push(c)} c.l.push(s) }
   app.innerHTML=steps(1)+`<h1>איזה טיפול תרצי?</h1><p class="sub">בוחרים טיפול, ואז רואים את השעות הפנויות.</p>`+
     cats.map(c=>`${c.n?`<div class="cat">${esc(c.n)}</div>`:''}${c.l.map(s=>`<button class="svc" data-s="${esc(s.id)}"><span><b>${esc(s.name)}</b><span>${durTxt(s.min)}</span></span>${s.price!=null?`<em>${s.price} ₪</em>`:'<span class="arr">‹</span>'}</button>`).join('')}`).join('');
+  if(st.cfg.terms){app.insertAdjacentHTML('beforeend','<p class="note"><button class="tlink" id="topen0">תקנון ומדיניות ביטול</button></p>');$('#topen0').onclick=()=>{st.svc=null;showTerms()}}
   app.querySelectorAll('.svc').forEach(b=>b.onclick=()=>pick(b.dataset.s));
   scrollTo(0,0);
 }
@@ -178,6 +186,20 @@ const pay=()=>(st.cfg&&st.cfg.pay)||{};
 const ANDROID=/android/i.test(navigator.userAgent);
 const bitHref=()=>ANDROID?'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.bnhp.payments.paymentsapp;S.browser_fallback_url='+encodeURIComponent('https://play.google.com/store/apps/details?id=com.bnhp.payments.paymentsapp')+';end':'paymentsBIT://';
 const fmtPhone=p=>p?p.slice(0,3)+'-'+p.slice(3):'';
+function termsHtml(){
+  const dep=(st.svc&&st.svc.deposit)||st.cfg.deposit_default||0, ch=st.cfg.cancel_hours;
+  return String(st.cfg.terms||'').split('\n').map((l,i)=>{l=esc(l).replace(/\{deposit\}/g,dep?dep+' ₪':'המקדמה').replace(/\{cancel_hours\}/g,ch);
+    if(!l.trim())return ''; if(i===0)return `<h2>${l}</h2>`; if(/^\d+\.\s/.test(l))return `<h3>${l}</h3>`; return `<p style="margin:0 0 6px">${l}</p>`}).join('');
+}
+function showTerms(){
+  const m=document.createElement('div');m.className='modal';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');
+  m.innerHTML=`<div class="sheet"><div class="body">${termsHtml()}</div><div class="foot"><button class="btn" id="tok">קראתי, אני מסכימה</button><button class="btn ghost" id="tcl" style="margin-top:8px">סגירה</button></div></div>`;
+  document.body.appendChild(m);
+  const close=()=>m.remove();
+  m.onclick=e=>{if(e.target===m)close()};
+  m.querySelector('#tcl').onclick=close;
+  m.querySelector('#tok').onclick=()=>{st.termsOk=true;const k=$('#termsok');if(k)k.checked=true;close()};
+}
 function depHtml(){
   const amt=st.svc.deposit||0, P=pay(); if(!amt) return '';
   if(!st.depMethod) st.depMethod=(P.bit||P.bit_url)?'bit':'paybox';
@@ -205,9 +227,12 @@ function viewDetails(){
   <label for="ph">טלפון נייד</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="050-1234567" dir="ltr" style="text-align:right" value="${esc(st.phone)}" required>
   <input class="hp" type="text" id="ws" tabindex="-1" autocomplete="off" aria-hidden="true"></form>
   ${depHtml()}
+  ${st.cfg.terms?`<label class="chk" style="margin:14px 2px 0"><input type="checkbox" id="termsok" ${st.termsOk?'checked':''}> <span>קראתי ואני מסכימה ל<button type="button" class="tlink" id="topen">תקנון</button>, כולל מדיניות הביטול והמקדמה</span></label>`:''}
   <p class="note">ביטול אפשרי עד ${st.cfg.cancel_hours} שעות לפני התור${(st.svc.deposit||0)>0?'. ביטול מאוחר יותר או אי-הגעה — המקדמה לא מוחזרת':''}.<br>הפרטים נשמרים רק לצורך התור ונמסרים לרינת בלבד.</p>`;
   $('#bk').onclick=()=>{st.err='';viewSlots()};
   bindDep();
+  const tk=$('#termsok'); if(tk) tk.onchange=()=>{st.termsOk=tk.checked};
+  const to=$('#topen'); if(to) to.onclick=e=>{e.preventDefault();const n=$('#nm'),p=$('#ph');if(n)st.name=n.value;if(p)st.phone=p.value;showTerms()};
   setBar(`<button class="btn" id="go">${st.busy?'קובעת…':'לקבוע את התור'}</button>`);
   $('#go').disabled=st.busy; $('#go').onclick=submit; $('#f').onsubmit=e=>{e.preventDefault();submit()};
 }
@@ -218,10 +243,11 @@ async function submit(){
   if(st.name.replace(/[^\p{L}]/gu,'').length<2){st.err=ERR.name;return viewDetails()}
   if(!/^05\d{8}$/.test(d)){st.err=ERR.phone;return viewDetails()}
   if((st.svc.deposit||0)>0&&!st.depPaid){st.err=ERR.deposit;return viewDetails()}
+  if(st.cfg.terms&&!st.termsOk){st.err=ERR.terms;return viewDetails()}
   st.busy=true; st.err=''; viewDetails();
   let permP=null; try{ if(canPush()&&Notification.permission==='default') permP=Notification.requestPermission(); }catch(e){}
   try{
-    const j=await call({mode:'book',service:st.svc.id,start:`${st.date}T${st.time}`,name:st.name,phone:d,website:$('#ws').value,deposit_paid:!!st.depPaid,deposit_method:st.depMethod||''});
+    const j=await call({mode:'book',service:st.svc.id,start:`${st.date}T${st.time}`,name:st.name,phone:d,website:$('#ws').value,deposit_paid:!!st.depPaid,deposit_method:st.depMethod||'',terms_ok:!!st.termsOk});
     try{localStorage.setItem('glow_name',st.name);localStorage.setItem('glow_phone',st.phone)}catch(e){}
     st.busy=false; viewDone(j.booking);
     try{ if(permP) await permP; if(canPush()&&Notification.permission==='granted') autoRemind(j.booking.token); }catch(e){}

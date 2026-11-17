@@ -149,7 +149,8 @@ function render(){
   }
   if(tab==='more'){
     const num=(k,l,sfx,min,max)=>`<div class="row"><div class="g"><b>${l}</b></div><span><input type="number" data-v="${k}" value="${V[k]}" min="${min}" max="${max}"> ${sfx}</span></div>`;
-    h+=`<div class="card"><h2>מקדמה לפני קביעת תור</h2><p class="h">הלקוחה מעבירה מקדמה בביט או בפייבוקס ומסמנת "העברתי", ורק אז התור נקבע. אצלך התור מסומן "לבדוק" עד שתאשרי שהכסף נכנס.</p>
+    h+=`<div class="card"><h2>תקנון ללקוחות</h2><p class="h">הלקוחה חייבת לסמן שקראה ומסכימה לתקנון לפני שהתור נקבע. <b>{deposit}</b> ו-<b>{cancel_hours}</b> מתחלפים לבד בסכום המקדמה ובשעות הביטול.</p><textarea class="w" data-v="terms" rows="14" style="font:inherit;font-size:14px;line-height:1.6;border:1.5px solid var(--ln);border-radius:10px;padding:10px;width:100%">${esc(V.terms||'')}</textarea></div>
+    <div class="card"><h2>מקדמה לפני קביעת תור</h2><p class="h">הלקוחה מעבירה מקדמה בביט או בפייבוקס ומסמנת "העברתי", ורק אז התור נקבע. אצלך התור מסומן "לבדוק" עד שתאשרי שהכסף נכנס.</p>
     <div class="row"><div class="g"><b>לבקש מקדמה</b></div><label class="sw"><input type="checkbox" data-v="deposit_on" ${V.deposit_on?'checked':''}><i></i></label></div>
     ${num('deposit_amount','סכום המקדמה (לכל טיפול)','₪',0,5000)}
     <label class="f">קישור תשלום בביט (מומלץ — פותח את ביט ישר עם הסכום)</label><input type="url" class="w" dir="ltr" data-v="bit_url" value="${esc(V.bit_url||'')}" placeholder="קישור תשלום ממורנינג">
