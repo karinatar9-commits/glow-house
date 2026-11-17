@@ -100,6 +100,11 @@ function render(){
   let h=`<div class="tabs">${[['today','תורים'],['hours','שעות עבודה'],['blocks','חסימות'],['svc','טיפולים'],['more','הגדרות']].map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-tab="${k}">${n}</button>`).join('')}</div>`;
   if(tab==='today'){
     if(window.__gOk!==undefined){h+=window.__gOk?'<div class="box ok">החיבור לגוגל הצליח ✓</div>':'<div class="box bad">החיבור לגוגל לא הושלם. נסי שוב.</div>';window.__gOk=undefined}
+    {const t=todayStr(), tm=new Date(Date.parse(t+'T12:00:00Z')+86400e3).toISOString().slice(0,10);
+     const due=[];
+     for(const b of D.bookings||[]){ if(b.status!=='confirmed'||new Date(b.starts_at)<new Date())continue; const d=new Date(b.starts_at).toLocaleDateString('sv-SE',{timeZone:'Asia/Jerusalem'}); const R=b.reminders||{};
+       if(d===tm&&!R.r24_wa)due.push([b,'r24']); else if(d===t&&!R.morning_wa)due.push([b,'morning']); }
+     if(due.length){ h+=`<div class="card" id="rem" style="border:1.5px solid var(--ac)"><h2>📲 תזכורות לשלוח (${due.length})</h2><p class="h">לחיצה פותחת את הווצאפ שלך עם ההודעה מוכנה, רק לשלוח.</p>${due.map(([b,k])=>{const tm2=new Date(b.starts_at).toLocaleTimeString('he-IL',{timeZone:'Asia/Jerusalem',hour:'2-digit',minute:'2-digit'});return `<div class="row"><div class="g"><b>${esc(b.name)} · ${tm2}</b><small>${k==='r24'?'מחר':'היום'} · ${esc(b.service_name)}${b.attend_confirmed_at?' · אישרה הגעה':''}</small></div><button class="btn sm" data-wa="${b.id}" data-k="${k}">שליחה בווצאפ</button></div>`}).join('')}</div>`; }}
     {const perm=('Notification' in window)?Notification.permission:'na', has=D.admin_push_count>0;
      h+=`<div class="card"><h2>🔔 התראות לטלפון</h2>${has&&perm==='granted'?'<p class="h" style="margin:0">פעיל ✓ תקבלי התראה על כל תור חדש, ביטול ואישור הגעה.</p>':IOS&&!STANDALONE?'<p class="h" style="margin:0">באייפון התראות עובדות רק מהאפליקציה: קודם מתקינים (למטה), פותחים מהאייקון, ואז מפעילים כאן.</p>':`<p class="h">תורים חדשים, ביטולים ואישורי הגעה יקפצו לך בטלפון.</p><button class="btn full" id="apush">הפעלת התראות</button>`}</div>`;}
     if(!STANDALONE) h+=`<div class="card"><h2>📲 להתקין כאפליקציה בטלפון</h2>${installEvt?'<p class="h">אייקון של Glow ניהול יופיע במסך הבית.</p><button class="btn full" id="inst">התקנה</button>':IOS?'<p class="h" style="margin:0">בספארי: כפתור השיתוף <b>⬆︎</b> למטה ← <b>"הוספה למסך הבית"</b> ← "הוספה". חשוב לפתוח מהקישור שקיבלת, כדי שהאייקון יזכור את הכניסה.</p>':'<p class="h" style="margin:0">בכרום: תפריט שלוש הנקודות ← <b>"התקנת אפליקציה"</b> או "הוספה למסך הבית".</p>'}</div>`;
@@ -152,7 +157,7 @@ function render(){
     <label class="f">מספר לביט (אם אין קישור)</label><input type="tel" class="w" dir="ltr" data-v="bit_phone" value="${esc(V.bit_phone||'')}" placeholder="0501234567">
     <label class="f">קישור תשלום בפייבוקס (לא חובה)</label><input type="url" class="w" dir="ltr" data-v="paybox_url" value="${esc(V.paybox_url||'')}" placeholder="https://payboxapp.page.link/...">
     <p class="h" style="margin-top:8px">אפשר לקבוע מקדמה אחרת לטיפול מסוים בלשונית "טיפולים".</p></div>
-    <div class="card"><h2>תזכורות ללקוחות</h2><p class="h">נשלחות כהתראה לטלפון של הלקוחה (אם אישרה התראות כשקבעה), עם כפתור לאישור הגעה.</p>
+    <div class="card"><h2>תזכורות ללקוחות</h2><p class="h">נשלחות לבד כהתראה לטלפון של לקוחה שאישרה התראות. בנוסף, כל בוקר מופיעה לך רשימת "תזכורות לשלוח" עם כפתור ווצאפ לכל לקוחה, כדי שגם מי שבאייפון תקבל תזכורת.</p>
     <div class="row"><div class="g"><b>יום לפני התור</b><small>כולל בקשה לאשר הגעה</small></div><label class="sw"><input type="checkbox" data-v="remind_24" ${V.remind_24!==false?'checked':''}><i></i></label></div>
     <div class="row"><div class="g"><b>בבוקר של התור</b></div><label class="sw"><input type="checkbox" data-v="remind_morning" ${V.remind_morning!==false?'checked':''}><i></i></label></div>
     ${num('morning_hour','שעת תזכורת הבוקר','',5,12)}</div>
@@ -177,6 +182,18 @@ function bind(){
   const on=(id,f)=>{const e=$('#'+id);if(e)e.onclick=f};
   const live=$('#live'); if(live) live.onchange=async()=>{V.live=live.checked;await save()};
   on('recheck',()=>load(true));
+  app.querySelectorAll('[data-wa]').forEach(btn=>btn.onclick=async()=>{
+    const b=(D.bookings||[]).find(x=>x.id===btn.dataset.wa); if(!b)return; const k=btn.dataset.k;
+    const tm=new Date(b.starts_at).toLocaleTimeString('he-IL',{timeZone:'Asia/Jerusalem',hour:'2-digit',minute:'2-digit'});
+    const link=`https://glow.goldchain-ai.com/?c=${b.cancel_token}`, addr=V.address?`\n📍 ${V.address}`:'';
+    const txt=k==='r24'
+      ?`היי ${b.name} 💗\nתזכורת: מחר בשעה ${tm} — ${b.service_name} ב-${V.business}.${addr}\n\nנא לאשר הגעה כאן:\n${link}\n\nאפשר לבטל עד ${V.cancel_hours} שעות לפני התור מאותו קישור.${b.deposit?' אחרי זה המקדמה לא מוחזרת.':''}`
+      :`בוקר טוב ${b.name} ☀️\nמחכה לך היום בשעה ${tm} — ${b.service_name}.${addr}${b.attend_confirmed_at?'':`\n\nלאישור הגעה: ${link}`}`;
+    const ph=String(b.phone||'').replace(/\D/g,'').replace(/^0/,'972');
+    window.open(`https://wa.me/${ph}?text=${encodeURIComponent(txt)}`,'_blank');
+    btn.disabled=true;btn.textContent='נשלח ✓';
+    try{await call({mode:'admin_reminded',id:b.id,kind:k});setTimeout(()=>load(true),1500)}catch(e){}
+  });
   on('apush',async()=>{const b=$('#apush');b.disabled=true;b.textContent='רגע…';
     try{if(!('PushManager' in window))throw 0;if(await Notification.requestPermission()!=='granted'){alertBox('ההתראות לא אושרו. אפשר לאשר בהגדרות ולנסות שוב.');b.disabled=false;b.textContent='הפעלת התראות';return}
       const reg=await navigator.serviceWorker.ready;const u=s=>{const q='='.repeat((4-s.length%4)%4);const r=atob((s+q).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))};
