@@ -114,18 +114,18 @@ async function autoRemind(token){
     const reg=await navigator.serviceWorker.ready;const key=(st.cfg&&st.cfg.vapid)||(await call({mode:'config'})).vapid;
     const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(key)});
     await call({mode:'subscribe',token,sub:sub.toJSON()});
-    if(btn){btn.disabled=true;btn.textContent='🔔 התזכורות פעילות ✓'} if(note) note.textContent='תקבלי תזכורת יום לפני (עם אישור הגעה) ובבוקר של התור.';
+    if(btn){btn.disabled=true;btn.textContent='🔔 התזכורות פעילות ✓'} if(note) note.textContent='תקבלי תזכורת יומיים לפני (עם אישור הגעה) ובבוקר של התור.';
   }catch(e){}
 }
 async function remindMe(token,btn,note){
-  if(!canPush()){note.innerHTML=IOS?'באייפון התזכורות עובדות דרך היומן: לחצי "הוספה ליומן באייפון" — יש בו תזכורת יום לפני ושעתיים לפני.':'הדפדפן הזה לא תומך בהתראות. אפשר להוסיף את התור ליומן.';btn.remove();return}
+  if(!canPush()){note.innerHTML=IOS?'באייפון התזכורות עובדות דרך היומן: לחצי "הוספה ליומן באייפון" — יש בו תזכורת יומיים לפני ושעתיים לפני.':'הדפדפן הזה לא תומך בהתראות. אפשר להוסיף את התור ליומן.';btn.remove();return}
   btn.disabled=true;btn.textContent='רגע…';
   try{
     if(await Notification.requestPermission()!=='granted'){note.textContent='ההתראות לא אושרו. אפשר לאשר בהגדרות הדפדפן ולנסות שוב.';btn.disabled=false;btn.textContent='🔔 לקבל תזכורות לתור';return}
     const reg=await navigator.serviceWorker.ready;const key=(st.cfg&&st.cfg.vapid)||(await call({mode:'config'})).vapid;
     const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(key)});
     await call({mode:'subscribe',token,sub:sub.toJSON()});
-    btn.textContent='🔔 התזכורות פעילות ✓';note.textContent='נשלח לך תזכורת יום לפני (עם אישור הגעה) ובבוקר של התור.'
+    btn.textContent='🔔 התזכורות פעילות ✓';note.textContent='נשלח לך תזכורת יומיים לפני (עם אישור הגעה) ובבוקר של התור.'
   }catch(e){btn.disabled=false;btn.textContent='🔔 לקבל תזכורות לתור';note.textContent='לא הצלחנו להפעיל תזכורות. נסי שוב.'}
 }
 const $=s=>document.querySelector(s), app=$('#app'), bar=$('#bar'), barin=$('#barin');
@@ -261,7 +261,7 @@ const gdate=iso=>iso.replace(/[-:]/g,'').replace(/\.\d{3}/,'');
 function calLinks(b){
   const title=`${b.service} · Glow House`, loc=st.cfg?.address||'';
   const g=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${gdate(b.start)}/${gdate(b.end)}&location=${encodeURIComponent(loc)}`;
-  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Glow House//Booking//HE','BEGIN:VEVENT',`UID:${(b.token||Date.now())}@glowhouse`,`DTSTAMP:${gdate(new Date().toISOString())}`,`DTSTART:${gdate(b.start)}`,`DTEND:${gdate(b.end)}`,`SUMMARY:${title}`,`LOCATION:${loc.replace(/,/g,'\\,')}`,'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:מחר: תור ב-Glow House','END:VALARM','BEGIN:VALARM','TRIGGER:-PT2H','ACTION:DISPLAY','DESCRIPTION:תור ב-Glow House','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Glow House//Booking//HE','BEGIN:VEVENT',`UID:${(b.token||Date.now())}@glowhouse`,`DTSTAMP:${gdate(new Date().toISOString())}`,`DTSTART:${gdate(b.start)}`,`DTEND:${gdate(b.end)}`,`SUMMARY:${title}`,`LOCATION:${loc.replace(/,/g,'\\,')}`,'BEGIN:VALARM','TRIGGER:-P2D','ACTION:DISPLAY','DESCRIPTION:בעוד יומיים: תור ב-Glow House. ביטול רק עד 24 שעות לפני','END:VALARM','BEGIN:VALARM','TRIGGER:-PT2H','ACTION:DISPLAY','DESCRIPTION:תור ב-Glow House','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
   return {g,ics:'data:text/calendar;charset=utf-8,'+encodeURIComponent(ics)};
 }
 function viewDone(b){
@@ -270,7 +270,7 @@ function viewDone(b){
   <div class="sum"><div><span>טיפול</span><b>${esc(b.service)}</b></div><div><span>מתי</span><b>${esc(b.when)}</b></div>${st.cfg.address?`<div><span>איפה</span><b>${esc(st.cfg.address)}</b></div>`:''}</div>
   <a class="btn" href="${l.g}" target="_blank" rel="noopener">הוספה ליומן גוגל</a>
   <a class="btn ghost" href="${l.ics}" download="glow-house.ics">הוספה ליומן באייפון</a>
-  <button class="btn" id="rmd" style="background:var(--ink)">🔔 לקבל תזכורות לתור</button><p class="note" id="rmdn" style="margin-top:6px">תזכורת יום לפני עם אישור הגעה, ותזכורת בבוקר של התור.</p>
+  <button class="btn" id="rmd" style="background:var(--ink)">🔔 לקבל תזכורות לתור</button><p class="note" id="rmdn" style="margin-top:6px">תזכורת יומיים לפני עם אישור הגעה, ותזכורת בבוקר של התור.</p>
   <button class="btn ghost" id="cp">העתקת קישור לביטול התור</button>
   ${b.deposit?`<p class="note">רינת תאשר שהמקדמה של ${b.deposit.amount} ₪ התקבלה.</p>`:''}<p class="note">${b.wa_sent?'שלחנו לך אישור בווצאפ. ':''}אפשר לבטל אונליין עד ${st.cfg.cancel_hours} שעות לפני התור, דרך הקישור. כדאי לשמור אותו.${b.deposit?' ביטול מאוחר יותר — המקדמה לא מוחזרת.':''}</p>
   <button class="link" id="again" style="display:block;margin:0 auto">קביעת תור נוסף</button>`;
