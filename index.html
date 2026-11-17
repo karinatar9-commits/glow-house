@@ -176,7 +176,7 @@ function viewSlots(){
 const whenTxt=()=>{const p=dParts(st.date);return `יום ${DAYS[p.wd]} ${p.d}.${p.m} · ${st.time}`};
 const pay=()=>(st.cfg&&st.cfg.pay)||{};
 const ANDROID=/android/i.test(navigator.userAgent);
-const bitHref=()=>ANDROID?'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.bnhp.payments.paymentsapp;S.browser_fallback_url='+encodeURIComponent('https://play.google.com/store/apps/details?id=com.bnhp.payments.paymentsapp')+';end':'https://www.bitpay.co.il/app/';
+const bitHref=()=>ANDROID?'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.bnhp.payments.paymentsapp;S.browser_fallback_url='+encodeURIComponent('https://play.google.com/store/apps/details?id=com.bnhp.payments.paymentsapp')+';end':'paymentsBIT://';
 const fmtPhone=p=>p?p.slice(0,3)+'-'+p.slice(3):'';
 function depHtml(){
   const amt=st.svc.deposit||0, P=pay(); if(!amt) return '';
@@ -193,7 +193,7 @@ function bindDep(){
   app.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{keep();st.depMethod=b.dataset.pm;st.depPaid=false;viewDetails()});
   const c=$('#cpbit'); if(c) c.onclick=async()=>{try{await navigator.clipboard.writeText(pay().bit);c.textContent='הועתק ✓'}catch(e){prompt('המספר להעברה בביט:',pay().bit)}};
   const k=$('#depok'); if(k) k.onchange=()=>{st.depPaid=k.checked};
-  const ob=$('#openbit'); if(ob) ob.onclick=()=>{try{navigator.clipboard.writeText(pay().bit)}catch(e){} const n=$('#nm'),p=$('#ph');if(n)st.name=n.value;if(p)st.phone=p.value; const c=$('#cpbit'); if(c) c.textContent='הועתק ✓';};
+  const ob=$('#openbit'); if(ob) ob.onclick=()=>{ if(!ANDROID){ const t=setTimeout(()=>{ if(!document.hidden) location.href='https://apps.apple.com/il/app/bit/id1182007739'; },1800); addEventListener('pagehide',()=>clearTimeout(t),{once:true}); document.addEventListener('visibilitychange',()=>{ if(document.hidden) clearTimeout(t); },{once:true}); }try{navigator.clipboard.writeText(pay().bit)}catch(e){} const n=$('#nm'),p=$('#ph');if(n)st.name=n.value;if(p)st.phone=p.value; const c=$('#cpbit'); if(c) c.textContent='הועתק ✓';};
 }
 function viewDetails(){
   const s=st.svc;
