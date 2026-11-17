@@ -175,6 +175,8 @@ function viewSlots(){
 }
 const whenTxt=()=>{const p=dParts(st.date);return `יום ${DAYS[p.wd]} ${p.d}.${p.m} · ${st.time}`};
 const pay=()=>(st.cfg&&st.cfg.pay)||{};
+const ANDROID=/android/i.test(navigator.userAgent);
+const bitHref=()=>ANDROID?'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.bnhp.payments.paymentsapp;S.browser_fallback_url='+encodeURIComponent('https://play.google.com/store/apps/details?id=com.bnhp.payments.paymentsapp')+';end':'https://apps.apple.com/il/app/bit/id1182007739';
 const fmtPhone=p=>p?p.slice(0,3)+'-'+p.slice(3):'';
 function depHtml(){
   const amt=st.svc.deposit||0, P=pay(); if(!amt) return '';
@@ -182,7 +184,7 @@ function depHtml(){
   return `<div class="dep" id="dep"><h2>מקדמה לשריון התור: ${amt} ₪</h2><p>משלמים מקדמה, ואז קובעים. המקדמה מקוזזת מהמחיר ביום הטיפול.</p>
   ${(P.bit||P.bit_url)&&P.paybox?`<div class="paybtns"><button type="button" class="paybtn ${st.depMethod==='bit'?'on':''}" data-pm="bit">ביט</button><button type="button" class="paybtn ${st.depMethod==='paybox'?'on':''}" data-pm="paybox">פייבוקס</button></div>`:''}
   ${st.depMethod==='bit'&&P.bit_url?`<a class="btn" href="${esc(P.bit_url)}" target="_blank" rel="noopener" style="margin-bottom:12px;background:#1e5ccf">תשלום ${amt} ₪ בביט</a>`:''}
-  ${st.depMethod==='bit'&&!P.bit_url&&P.bit?`<div class="bitnum"><span>מעבירים בביט ${amt} ₪ למספר<br><b dir="ltr">${fmtPhone(P.bit)}</b></span><button type="button" class="btn ghost" id="cpbit" style="width:auto;padding:10px 14px;font-size:15px">העתקה</button></div>`:''}
+  ${st.depMethod==='bit'&&!P.bit_url&&P.bit?`<div class="bitnum"><span>מעבירים בביט ${amt} ₪ למספר<br><b dir="ltr">${fmtPhone(P.bit)}</b></span><button type="button" class="btn ghost" id="cpbit" style="width:auto;padding:10px 14px;font-size:15px">העתקה</button></div><a class="btn" id="openbit" href="${bitHref()}" rel="noopener" style="margin-bottom:12px;background:#1e5ccf">העתקת המספר ופתיחת ביט</a>`:''}
   ${st.depMethod==='paybox'&&P.paybox?`<a class="btn" href="${esc(P.paybox)}" target="_blank" rel="noopener" style="margin-bottom:12px">תשלום ${amt} ₪ בפייבוקס</a>`:''}
   <label class="chk"><input type="checkbox" id="depok" ${st.depPaid?'checked':''}> העברתי מקדמה של ${amt} ₪ ${st.depMethod==='bit'?'בביט':'בפייבוקס'}</label></div>`;
 }
@@ -191,6 +193,7 @@ function bindDep(){
   app.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{keep();st.depMethod=b.dataset.pm;st.depPaid=false;viewDetails()});
   const c=$('#cpbit'); if(c) c.onclick=async()=>{try{await navigator.clipboard.writeText(pay().bit);c.textContent='הועתק ✓'}catch(e){prompt('המספר להעברה בביט:',pay().bit)}};
   const k=$('#depok'); if(k) k.onchange=()=>{st.depPaid=k.checked};
+  const ob=$('#openbit'); if(ob) ob.onclick=()=>{try{navigator.clipboard.writeText(pay().bit)}catch(e){} const n=$('#nm'),p=$('#ph');if(n)st.name=n.value;if(p)st.phone=p.value; const c=$('#cpbit'); if(c) c.textContent='הועתק ✓';};
 }
 function viewDetails(){
   const s=st.svc;
