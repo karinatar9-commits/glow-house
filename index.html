@@ -154,10 +154,11 @@ const pay=()=>(st.cfg&&st.cfg.pay)||{};
 const fmtPhone=p=>p?p.slice(0,3)+'-'+p.slice(3):'';
 function depHtml(){
   const amt=st.svc.deposit||0, P=pay(); if(!amt) return '';
-  if(!st.depMethod) st.depMethod=P.bit?'bit':'paybox';
+  if(!st.depMethod) st.depMethod=(P.bit||P.bit_url)?'bit':'paybox';
   return `<div class="dep" id="dep"><h2>מקדמה לשריון התור: ${amt} ₪</h2><p>משלמים מקדמה, ואז קובעים. המקדמה מקוזזת מהמחיר ביום הטיפול.</p>
-  ${P.bit&&P.paybox?`<div class="paybtns"><button type="button" class="paybtn ${st.depMethod==='bit'?'on':''}" data-pm="bit">ביט</button><button type="button" class="paybtn ${st.depMethod==='paybox'?'on':''}" data-pm="paybox">פייבוקס</button></div>`:''}
-  ${st.depMethod==='bit'&&P.bit?`<div class="bitnum"><span>מעבירים בביט ${amt} ₪ למספר<br><b dir="ltr">${fmtPhone(P.bit)}</b></span><button type="button" class="btn ghost" id="cpbit" style="width:auto;padding:10px 14px;font-size:15px">העתקה</button></div>`:''}
+  ${(P.bit||P.bit_url)&&P.paybox?`<div class="paybtns"><button type="button" class="paybtn ${st.depMethod==='bit'?'on':''}" data-pm="bit">ביט</button><button type="button" class="paybtn ${st.depMethod==='paybox'?'on':''}" data-pm="paybox">פייבוקס</button></div>`:''}
+  ${st.depMethod==='bit'&&P.bit_url?`<a class="btn" href="${esc(P.bit_url)}" target="_blank" rel="noopener" style="margin-bottom:12px;background:#1e5ccf">תשלום ${amt} ₪ בביט</a>`:''}
+  ${st.depMethod==='bit'&&!P.bit_url&&P.bit?`<div class="bitnum"><span>מעבירים בביט ${amt} ₪ למספר<br><b dir="ltr">${fmtPhone(P.bit)}</b></span><button type="button" class="btn ghost" id="cpbit" style="width:auto;padding:10px 14px;font-size:15px">העתקה</button></div>`:''}
   ${st.depMethod==='paybox'&&P.paybox?`<a class="btn" href="${esc(P.paybox)}" target="_blank" rel="noopener" style="margin-bottom:12px">תשלום ${amt} ₪ בפייבוקס</a>`:''}
   <label class="chk"><input type="checkbox" id="depok" ${st.depPaid?'checked':''}> העברתי מקדמה של ${amt} ₪ ${st.depMethod==='bit'?'בביט':'בפייבוקס'}</label></div>`;
 }

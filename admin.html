@@ -145,7 +145,9 @@ function render(){
     h+=`<div class="card"><h2>מקדמה לפני קביעת תור</h2><p class="h">הלקוחה מעבירה מקדמה בביט או בפייבוקס ומסמנת "העברתי", ורק אז התור נקבע. אצלך התור מסומן "לבדוק" עד שתאשרי שהכסף נכנס.</p>
     <div class="row"><div class="g"><b>לבקש מקדמה</b></div><label class="sw"><input type="checkbox" data-v="deposit_on" ${V.deposit_on?'checked':''}><i></i></label></div>
     ${num('deposit_amount','סכום המקדמה (לכל טיפול)','₪',0,5000)}
-    <label class="f">מספר לביט</label><input type="tel" class="w" dir="ltr" data-v="bit_phone" value="${esc(V.bit_phone||'')}" placeholder="0501234567">
+    <label class="f">קישור תשלום בביט (מומלץ — פותח את ביט ישר עם הסכום)</label><input type="url" class="w" dir="ltr" data-v="bit_url" value="${esc(V.bit_url||'')}" placeholder="קישור תשלום ממורנינג">
+    <p class="h" style="margin:6px 0 0">יוצרים במורנינג ← קידום מכירות ← לינקים לתשלום, עם סכום המקדמה ותשלום בביט, ומדביקים כאן. בלי קישור, הלקוחה מעתיקה את המספר שלמטה ומעבירה בעצמה.</p>
+    <label class="f">מספר לביט (אם אין קישור)</label><input type="tel" class="w" dir="ltr" data-v="bit_phone" value="${esc(V.bit_phone||'')}" placeholder="0501234567">
     <label class="f">קישור תשלום בפייבוקס (לא חובה)</label><input type="url" class="w" dir="ltr" data-v="paybox_url" value="${esc(V.paybox_url||'')}" placeholder="https://payboxapp.page.link/...">
     <p class="h" style="margin-top:8px">אפשר לקבוע מקדמה אחרת לטיפול מסוים בלשונית "טיפולים".</p></div>
     `+`<div class="card"><h2>כללי קביעה</h2>
