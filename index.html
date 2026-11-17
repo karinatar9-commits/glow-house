@@ -101,6 +101,15 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 const IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const canPush=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
 const b64u=s=>{const p='='.repeat((4-s.length%4)%4);const r=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))};
+async function autoRemind(token){
+  const btn=$('#rmd'),note=$('#rmdn');
+  try{
+    const reg=await navigator.serviceWorker.ready;const key=(st.cfg&&st.cfg.vapid)||(await call({mode:'config'})).vapid;
+    const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(key)});
+    await call({mode:'subscribe',token,sub:sub.toJSON()});
+    if(btn){btn.disabled=true;btn.textContent='🔔 התזכורות פעילות ✓'} if(note) note.textContent='תקבלי תזכורת יום לפני (עם אישור הגעה) ובבוקר של התור.';
+  }catch(e){}
+}
 async function remindMe(token,btn,note){
   if(!canPush()){note.innerHTML=IOS?'באייפון התזכורות עובדות דרך היומן: לחצי "הוספה ליומן באייפון" — יש בו תזכורת יום לפני ושעתיים לפני.':'הדפדפן הזה לא תומך בהתראות. אפשר להוסיף את התור ליומן.';btn.remove();return}
   btn.disabled=true;btn.textContent='רגע…';
@@ -207,10 +216,12 @@ async function submit(){
   if(!/^05\d{8}$/.test(d)){st.err=ERR.phone;return viewDetails()}
   if((st.svc.deposit||0)>0&&!st.depPaid){st.err=ERR.deposit;return viewDetails()}
   st.busy=true; st.err=''; viewDetails();
+  let permP=null; try{ if(canPush()&&Notification.permission==='default') permP=Notification.requestPermission(); }catch(e){}
   try{
     const j=await call({mode:'book',service:st.svc.id,start:`${st.date}T${st.time}`,name:st.name,phone:d,website:$('#ws').value,deposit_paid:!!st.depPaid,deposit_method:st.depMethod||''});
     try{localStorage.setItem('glow_name',st.name);localStorage.setItem('glow_phone',st.phone)}catch(e){}
     st.busy=false; viewDone(j.booking);
+    try{ if(permP) await permP; if(canPush()&&Notification.permission==='granted') autoRemind(j.booking.token); }catch(e){}
   }catch(e){
     st.busy=false; st.err=msg(e.message);
     if(e.message==='taken'){ st.time=''; try{const j=await call({mode:'slots',service:st.svc.id}); st.days=j.days||[]; if(!st.days.some(x=>x.date===st.date)) st.date=st.days[0]?.date||''}catch(_){} return viewSlots() }
